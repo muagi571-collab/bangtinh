@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Tính Lương</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Be+Vietnam+Pro:wght@400;600;700;800;900&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+
+:root{
+  --bg:#0d1117;
+  --bg2:#161b22;
+  --bg3:#1c2330;
+  --line:rgba(255,255,255,.07);
+  --line2:rgba(255,255,255,.13);
+  --text:#e6edf3;
+  --text2:#8b949e;
+  --text3:#484f58;
+  --amber:#f0a84e;
+  --amber2:#d4893a;
+  --green:#3fb950;
+  --mono:'DM Mono',monospace;
+  --sans:'Be Vietnam Pro',sans-serif;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+  --ITEM:48;
+  --ITEMpx:48px;
+  --VISIBLE:4;
+  --DRUM-H:220px;
+  --LABEL-H:36px;
+}
+
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+  display:flex;flex-direction:column;
+  align-items:center;
+  min-height:100vh;
+  padding:calc(var(--safe-top) + 16px) 16px calc(var(--safe-bot) + 24px);
+}
+
+/* HEADER */
+.header{
+  width:100%;max-width:460px;
+  padding:0 4px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.header-title{
+  font-size:22px;font-weight:900;letter-spacing:-.04em;
+  background:linear-gradient(135deg,var(--amber),var(--amber2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.date-btn{
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg3);border:1px solid var(--line2);
+  border-radius:10px;padding:8px 12px;cursor:pointer;
+  font-family:var(--mono);font-size:13px;color:var(--text2);
+  position:relative;
+}
+.date-btn input[type=date]{
+  position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;
+  font-size:16px; /* prevents iOS zoom */
+}
+
+/* PICKERS ROW */
+.pickers-row{
+  width:100%;max-width:460px;
+  display:flex;gap:10px;margin-bottom:12px;
+}
+.picker-card{
+  flex:1;background:var(--bg2);
+  border:1px solid var(--line2);border-radius:18px;
+  overflow:hidden;position:relative;
+  height:var(--DRUM-H);
+}
+.picker-title{
+  position:absolute;top:0;left:0;right:0;
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text3);text-align:center;
+  padding:10px 0 0;
+  z-index:10;pointer-events:none;
+  height:var(--LABEL-H);
+  background:var(--bg2);
+}
+
+/* DRUM */
+.drum-inner{
+  position:absolute;
+  top:var(--LABEL-H);
+  left:0;right:0;
+  bottom:0;
+  display:flex;
+  overflow:hidden;
+}
+
+/* highlight bar */
+.drum-inner::before{
+  content:'';
+  position:absolute;
+  top:50%;left:10px;right:10px;
+  height:var(--ITEMpx);
+  transform:translateY(-50%);
+  background:rgba(240,168,78,.07);
+  border:1px solid rgba(240,168,78,.22);
+  border-radius:10px;
+  pointer-events:none;
+  z-index:5;
+}
+
+/* fade top/bottom */
+.drum-inner::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(to bottom, var(--bg2) 0%, transparent 35%,transparent 65%, var(--bg2) 100%);
+  pointer-events:none;
+  z-index:6;
+}
+
+.drum-col-wrap{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  position:relative;overflow:hidden;
+  touch-action:none;
+}
+.drum-col-label{
+  font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text3);padding:4px 0;flex-shrink:0;
+  z-index:7;
+}
+.drum-track{
+  position:absolute;
+  left:0;right:0;
+  will-change:transform;
+  display:flex;flex-direction:column;align-items:center;
+}
+.drum-item{
+  height:var(--ITEMpx);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);
+  font-size:26px;font-weight:400;
+  color:var(--text3);
+  width:100%;
+  user-select:none;-webkit-user-select:none;
+  flex-shrink:0;
+}
+.drum-item.active{
+  color:var(--text);
+  font-size:34px;
+  font-weight:500;
+}
+
+/* colon */
+.drum-colon{
+  width:24px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:22px;font-weight:700;
+  color:var(--text3);flex-shrink:0;
+  position:relative;z-index:7;
+}
+
+/* GIÁ TIỀN */
+.gia-wrap{
+  width:100%;max-width:460px;
+  display:flex;align-items:stretch;gap:10px;
+  margin-bottom:12px;
+}
+.gia-card{
+  flex:1;background:var(--bg2);
+  border:1px solid var(--line2);border-radius:18px;
+  padding:14px 18px;display:flex;flex-direction:column;gap:6px;
+}
+.gia-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
+.gia-input-row{display:flex;align-items:center;gap:8px}
+.gia-input{
+  flex:1;background:none;border:none;outline:none;
+  font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);
+  width:100%;
+  -webkit-appearance:none;
+  font-size:22px; /* prevent iOS zoom (must be ≥16px to avoid zoom but we style bigger) */
+}
+.gia-input::placeholder{color:var(--text3)}
+.gia-unit{font-size:11px;font-weight:700;color:var(--text3);flex-shrink:0}
+
+.night-toggle{
+  background:var(--bg3);border:1px solid var(--line2);border-radius:12px;
+  padding:12px 14px;display:flex;flex-direction:column;gap:6px;
+  cursor:pointer;flex-shrink:0;min-width:72px;align-items:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.night-toggle-icon{font-size:22px;line-height:1}
+.night-toggle-label{font-size:9px;font-weight:700;letter-spacing:.06em;color:var(--text3);text-align:center;text-transform:uppercase}
+
+/* RESULT */
+.result-card{
+  width:100%;max-width:460px;
+  background:var(--bg2);
+  border:1px solid var(--line2);
+  border-radius:18px;
+  padding:16px 18px;
+}
+.result-section{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:4px}
+.result-head{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.result-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px solid var(--line);
+}
+.result-row:last-child{border-bottom:none}
+.result-label{font-size:12px;color:var(--text2);font-weight:500}
+.result-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)}
+.result-total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 0 0;
+}
+.result-total-label{font-size:13px;font-weight:700;color:var(--text2)}
+.result-total-val{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--green);letter-spacing:-.02em}
+.result-total-val.empty{color:var(--text3);font-size:18px}
+.night-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(240,168,78,.12);border:1px solid rgba(240,168,78,.25);
+  border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;
+  color:var(--amber);margin-left:6px;vertical-align:middle;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">Tính Lương</div>
+  <div class="date-btn">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-linecap="round"/></svg>
+    <span id="date-display">--/--/----</span>
+    <input type="date" id="inp-date" oninput="onDateChange()">
+  </div>
+</div>
+
+<div class="pickers-row">
+  <!-- GIỜ VÀO -->
+  <div class="picker-card">
+    <div class="picker-title">GIỜ VÀO</div>
+    <div class="drum-inner">
+      <div class="drum-col-wrap" id="col-in-h" data-key="inH" data-max="24">
+        <div class="drum-track" id="trk-in-h"></div>
+      </div>
+      <div class="drum-colon">:</div>
+      <div class="drum-col-wrap" id="col-in-m" data-key="inM" data-max="60">
+        <div class="drum-track" id="trk-in-m"></div>
+      </div>
+    </div>
+  </div>
+  <!-- GIỜ RA -->
+  <div class="picker-card">
+    <div class="picker-title">GIỜ RA</div>
+    <div class="drum-inner">
+      <div class="drum-col-wrap" id="col-out-h" data-key="outH" data-max="24">
+        <div class="drum-track" id="trk-out-h"></div>
+      </div>
+      <div class="drum-colon">:</div>
+      <div class="drum-col-wrap" id="col-out-m" data-key="outM" data-max="60">
+        <div class="drum-track" id="trk-out-m"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="gia-wrap">
+  <div class="gia-card">
+    <div class="gia-label">Giá tiền / giờ</div>
+    <div class="gia-input-row">
+      <input class="gia-input" id="inp-gia" type="text" inputmode="numeric" placeholder="180.000" oninput="fmtGia(this)">
+      <span class="gia-unit">đ / giờ</span>
+    </div>
+  </div>
+  <div class="night-toggle" id="night-btn" onclick="toggleNight()">
+    <div class="night-toggle-icon" id="night-icon">🌙</div>
+    <div class="night-toggle-label" id="night-lbl">Ca đêm</div>
+  </div>
+</div>
+
+<div class="result-card">
+  <div class="result-section">
+    <div class="result-head">Kết quả</div>
+    <div class="result-row"><span class="result-label">Ngày</span><span class="result-val" id="res-date">--</span></div>
+    <div class="result-row"><span class="result-label">Ca làm</span><span class="result-val" id="res-range">--:-- → --:--</span></div>
+    <div class="result-row"><span class="result-label">Tổng giờ</span><span class="result-val" id="res-hrs" style="color:var(--amber)">--</span></div>
+    <div class="result-row"><span class="result-label">Đơn giá</span><span class="result-val" id="res-gia">--</span></div>
+  </div>
+  <div class="result-total-row">
+    <span class="result-total-label">Thành tiền</span>
+    <span class="result-total-val empty" id="res-total">--</span>
+  </div>
+</div>
+
+<script>
+'use strict';
+const pad = n => String(n).padStart(2,'0');
+const DAY = ['CN','T2','T3','T4','T5','T6','T7'];
+const ITEM_H = 48;
+
+const state = { inH:8, inM:0, outH:17, outM:0, isNight:false };
+
+/* ── DATE ── */
+const inpDate = document.getElementById('inp-date');
+const dateDisplay = document.getElementById('date-display');
+function todayStr(){
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function updateDateDisplay(val){
+  if(!val){ dateDisplay.textContent='--/--/----'; return; }
+  const [y,m,d] = val.split('-');
+  dateDisplay.textContent = `${d}/${m}/${y}`;
+}
+inpDate.value = todayStr();
+updateDateDisplay(inpDate.value);
+function onDateChange(){ updateDateDisplay(inpDate.value); calc(); }
+
+/* ── DRUM PICKER (touch-based, iOS safe) ── */
+function buildDrum(colWrapId, trackId, count, initVal){
+  const wrap = document.getElementById(colWrapId);
+  const track = document.getElementById(trackId);
+  const key = wrap.dataset.key;
+
+  // Build items
+  track.innerHTML = '';
+  for(let i=0;i<count;i++){
+    const el = document.createElement('div');
+    el.className = 'drum-item';
+    el.textContent = pad(i);
+    track.appendChild(el);
+  }
+
+  const items = track.querySelectorAll('.drum-item');
+  let currentIdx = initVal;
+  let offsetY = 0; // current translateY of track
+
+  // The scroll area height (wrap minus label area at top = 0 since label removed from inner)
+  // Center of wrap = half of wrap clientHeight
+  // When item[i] is centered: translateY = wrapH/2 - i*ITEM_H - ITEM_H/2
+
+  function getCenter(){
+    return wrap.clientHeight / 2;
+  }
+  function idxToY(idx){
+    return getCenter() - idx * ITEM_H - ITEM_H / 2;
+  }
+  function clamp(y){
+    const min = idxToY(count-1);
+    const max = idxToY(0);
+    return Math.max(min, Math.min(max, y));
+  }
+  function yToIdx(y){
+    // invert: idx = (center - ITEM_H/2 - y) / ITEM_H
+    return Math.round((getCenter() - ITEM_H/2 - y) / ITEM_H);
+  }
+  function setY(y, animate){
+    offsetY = y;
+    track.style.transition = animate ? 'transform .25s cubic-bezier(.25,.46,.45,.94)' : 'none';
+    track.style.transform = `translateY(${y}px)`;
+    updateActive();
+  }
+  function snapTo(idx, animate){
+    idx = Math.max(0, Math.min(count-1, idx));
+    currentIdx = idx;
+    setY(idxToY(idx), animate);
+    state[key] = idx;
+    calc();
+  }
+  function updateActive(){
+    const ci = yToIdx(offsetY);
+    items.forEach((el,i) => {
+      el.classList.toggle('active', i === ci);
+    });
+  }
+
+  // Init position
+  requestAnimationFrame(()=>{
+    snapTo(initVal, false);
+  });
+
+  /* Touch handling */
+  let startY = 0, startOffset = 0, lastY = 0, lastT = 0, velY = 0;
+  let isDragging = false;
+
+  function onStart(clientY){
+    isDragging = true;
+    startY = clientY;
+    startOffset = offsetY;
+    lastY = clientY;
+    lastT = Date.now();
+    velY = 0;
+    track.style.transition = 'none';
+  }
+  function onMove(clientY){
+    if(!isDragging) return;
+    const now = Date.now();
+    const dt = now - lastT || 1;
+    velY = (clientY - lastY) / dt * 16; // px per frame
+    lastY = clientY;
+    lastT = now;
+    const dy = clientY - startY;
+    setY(clamp(startOffset + dy), false);
+  }
+  function onEnd(){
+    if(!isDragging) return;
+    isDragging = false;
+    // Momentum
+    let targetY = clamp(offsetY + velY * 8);
+    // snap to nearest
+    let idx = Math.round((getCenter() - ITEM_H/2 - targetY) / ITEM_H);
+    snapTo(idx, true);
+  }
+
+  // Touch events
+  wrap.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    onStart(e.touches[0].clientY);
+  }, {passive:false});
+  wrap.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    onMove(e.touches[0].clientY);
+  }, {passive:false});
+  wrap.addEventListener('touchend', e=>{
+    e.preventDefault();
+    onEnd();
+  }, {passive:false});
+
+  // Mouse events (desktop)
+  wrap.addEventListener('mousedown', e=>{
+    onStart(e.clientY);
+    const mm = ev=>onMove(ev.clientY);
+    const mu = ()=>{ onEnd(); window.removeEventListener('mousemove',mm); window.removeEventListener('mouseup',mu); };
+    window.addEventListener('mousemove',mm);
+    window.addEventListener('mouseup',mu);
+  });
+
+  // Click items
+  items.forEach((el,i)=>{
+    el.addEventListener('click', ()=> snapTo(i, true));
+  });
+}
+
+buildDrum('col-in-h','trk-in-h',24,state.inH);
+buildDrum('col-in-m','trk-in-m',60,state.inM);
+buildDrum('col-out-h','trk-out-h',24,state.outH);
+buildDrum('col-out-m','trk-out-m',60,state.outM);
+
+/* ── NIGHT TOGGLE ── */
+function toggleNight(){
+  state.isNight = !state.isNight;
+  const btn = document.getElementById('night-btn');
+  btn.style.borderColor = state.isNight ? 'rgba(240,168,78,.4)' : '';
+  btn.style.background  = state.isNight ? 'rgba(240,168,78,.08)' : '';
+  document.getElementById('night-icon').textContent = state.isNight ? '🌙' : '☀️';
+  document.getElementById('night-lbl').textContent  = state.isNight ? 'Đêm' : 'Ca ngày';
+  calc();
+}
+
+/* ── CALC ── */
+function calc(){
+  const dateVal = inpDate.value;
+  const raw = document.getElementById('inp-gia').value.replace(/[^0-9]/g,'');
+  const gia = parseInt(raw) || 0;
+
+  let inMins  = state.inH * 60 + state.inM;
+  let outMins = state.outH * 60 + state.outM;
+  let isNight = state.isNight;
+
+  if(outMins <= inMins){
+    // giờ ra ≤ giờ vào → qua đêm (tự động)
+    outMins += 1440;
+    isNight = true;
+  } else if(isNight){
+    // người dùng bật ca đêm thủ công
+    outMins += 1440;
+  }
+
+  const totalMins = Math.max(0, outMins - inMins);
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  const hrsDecimal = (totalMins / 60).toFixed(2);
+  const hrsStr = m === 0 ? `${h}h` : `${h}h ${pad(m)}p`;
+
+  let dateStr = '--';
+  if(dateVal){
+    const d = new Date(dateVal + 'T00:00:00');
+    dateStr = `${DAY[d.getDay()]} ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+  }
+
+  const nightTag = isNight ? '<span class="night-badge">🌙 Qua đêm</span>' : '';
+
+  document.getElementById('res-date').textContent = dateStr;
+  document.getElementById('res-range').innerHTML =
+    `${pad(state.inH)}:${pad(state.inM)} → ${pad(state.outH)}:${pad(state.outM)}${nightTag}`;
+  document.getElementById('res-hrs').textContent =
+    totalMins > 0 ? `${hrsStr}  (${hrsDecimal}h)` : '--';
+  document.getElementById('res-gia').textContent =
+    gia > 0 ? gia.toLocaleString('vi-VN') + ' đ/h' : '--';
+
+  const totalEl = document.getElementById('res-total');
+  if(gia > 0 && totalMins > 0){
+    const money = Math.round(totalMins / 60 * gia);
+    totalEl.textContent = money.toLocaleString('vi-VN') + 'đ';
+    totalEl.className = 'result-total-val';
+  } else {
+    totalEl.textContent = '--';
+    totalEl.className = 'result-total-val empty';
+  }
+}
+
+/* ── FORMAT GIÁ ── */
+function fmtGia(el){
+  const digits = el.value.replace(/[^0-9]/g,'');
+  const num = parseInt(digits) || 0;
+  el.value = num > 0 ? num.toLocaleString('vi-VN') : '';
+  calc();
+}
+
+/* ── INIT ── */
+(function(){
+  document.getElementById('inp-gia').value = (180000).toLocaleString('vi-VN');
+  calc();
+})();
+</script>
+</body>
+</html>
